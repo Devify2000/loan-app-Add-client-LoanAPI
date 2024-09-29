@@ -3,6 +3,8 @@ import { sendEmail } from "../utils/emailUtils.js";
 import otpGenerator from "otp-generator";
 import User from "../models/User.js";
 import OTP from "../models/Otp.js";
+import Loan from "../models/Loan.js";
+import Client from "../models/Client.js";
 
 // Helper Function: Check if user already exists
 const checkExistingUser = async (email) => {
@@ -33,7 +35,7 @@ const createNewUser = async (userData) => {
 
 // Helper Function: Generate and send OTP
 const generateAndSendOTP = async (email) => {
-  const otp = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
+  const otp = otpGenerator.generate(6, { lowerCaseAlphabets:false, upperCaseAlphabets: false, specialChars: false });
   await OTP.create({ email, otp });
 };
 
@@ -116,3 +118,39 @@ export const verifyOTP = async (req, res) => {
   }
 };
 
+export const getDashboardData = async (req, res) => {
+  try {
+    // Calculate total capital invested
+    const totalCapital = await Loan.aggregate([
+      { $group: { _id: null, total: { $sum: '$capital' } } }
+    ]);
+
+    // Calculate net monthly profit
+    const netMonthlyProfit = await Loan.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalProfit: { $sum: { $multiply: ['$capital', '$monthlyInterest'] } } // Example calculation
+        }
+      }
+    ]);
+
+    // Count clients who have paid and who have not paid
+    const paidClientsCount = await Client.countDocuments({ hasPaid: true });
+    const unpaidClientsCount = await Client.countDocuments({ hasPaid: false });
+
+    // Prepare the response data
+    const dashboardData = {
+      totalCapital: totalCapital[0] ? totalCapital[0].total : 0,
+      netMonthlyProfit: netMonthlyProfit[0] ? netMonthlyProfit[0].totalProfit : 0,
+      clientsPaid: paidClientsCount,
+      clientsNotPaid: unpaidClientsCount,
+    };
+
+    // Send the response
+    res.status(200).json(dashboardData);
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    res.status(500).json({ message: "Error fetching dashboard data", error: error.message });
+  }
+};
