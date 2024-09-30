@@ -84,7 +84,7 @@ const editLoan = async (req, res) => {
 // Get all loans
 const getAllLoans = async (req, res) => {
   try {
-    const loans = await Loan.find().populate('client');
+    const loans = await Loan.find().populate('clients');
     res.json(loans);
   } catch (error) {
     res.status(500).json({ error: error.message });
