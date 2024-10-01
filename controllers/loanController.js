@@ -6,7 +6,6 @@ import {calculateTotalProfit} from '../utils/extras.js'
 // Add a new loan
 const addLoan = async (req, res) => {
   try {
-    // Destructure and validate request body
     const {
       clients,
       userId,
@@ -20,39 +19,36 @@ const addLoan = async (req, res) => {
       status,
     } = req.body;
 
-    // Basic validation
+    // Basic validation of required fields
     if (!clients || !userId || !capital || !monthlyInterest || !timeline || !currency || !legalExpenses) {
       return res.status(400).json({ message: "All required fields must be provided." });
     }
 
-    // Optionally validate the existence of client and user (you can also handle this with middleware)
-    const validClients = await Promise.all(clients.map(async (client) => {
-      const validClient = await Client.findById(client);
-      if (!validClient) {
-        return false;
-      }
-      return true;
-    }));
-    if (validClients.includes(false)) {
+    // Validate clients and user
+    const areClientsValid = await validateClients(clients);
+    if (!areClientsValid) {
       return res.status(400).json({ message: "Invalid client ID." });
     }
 
-    const validUser = await User.findById(userId);
-    if (!validUser) {
+    const isUserValid = await validateUser(userId);
+    if (!isUserValid) {
       return res.status(400).json({ message: "Invalid user ID." });
     }
 
+    // Map clients with status
+    const clientStatusArray = mapClientsWithStatus(clients);
+
     // Create a new loan instance
     const loan = new Loan({
-      clients,
+      clients: clientStatusArray,
       userId,
       capital,
       monthlyInterest,
-      annualInterest: annualInterest || (monthlyInterest * 12), // Calculate annualInterest if not provided
+      annualInterest: calculateAnnualInterest(monthlyInterest, annualInterest),
       timeline,
       currency,
       legalExpenses,
-      totalProfit: totalProfit || calculateTotalProfit(capital, monthlyInterest, timeline), // Optional calculation for totalProfit
+      totalProfit: totalProfit || calculateTotalProfit(capital, monthlyInterest, timeline),
       status,
     });
 
@@ -63,10 +59,12 @@ const addLoan = async (req, res) => {
     res.status(201).json({ message: "Loan added successfully", loan });
 
   } catch (error) {
-    // Handle any errors during the process
+    // Handle errors during the process
     res.status(400).json({ message: "Error adding loan", error: error.message });
   }
 };
+
+
 
 // Edit an existing loan
 const editLoan = async (req, res) => {
@@ -102,6 +100,33 @@ const deleteLoan = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+const validateClients = async (clientIds) => {
+  const validClients = await Promise.all(clientIds.map(async (clientId) => {
+    const validClient = await Client.findById(clientId);
+    return !!validClient;
+  }));
+  return !validClients.includes(false);
+};
+
+// Validate if the user exists in the database
+const validateUser = async (userId) => {
+  const validUser = await User.findById(userId);
+  return !!validUser;
+};
+
+// Map clients to include client ID and default status
+const mapClientsWithStatus = (clients) => {
+  return clients.map(clientId => ({
+    client: clientId,
+    hasPaid: false, // Default status
+  }));
+};
+
+// Calculate the annual interest if not provided
+const calculateAnnualInterest = (monthlyInterest, annualInterest) => {
+  return annualInterest || (monthlyInterest * 12);
 };
 
 export {

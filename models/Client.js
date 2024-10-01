@@ -36,10 +36,6 @@ const clientSchema = new Schema(
       required: true,
       unique: true,
     },
-    hasPaid: {
-      type: Boolean,
-      default: true,
-    },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",

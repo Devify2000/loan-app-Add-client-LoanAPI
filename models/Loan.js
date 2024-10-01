@@ -2,11 +2,20 @@ import { Schema, model } from "mongoose";
 
 const loanSchema = new Schema(
   {
-    clients: [{
-      type: Schema.Types.ObjectId,
-      ref: "Client",
-      required: true,
-    }],
+    clients: [
+      {
+        _id: false,
+        client: {
+          type: Schema.Types.ObjectId,
+          ref: "Client",
+          required: true,
+        },
+        hasPaid: {
+          type: Boolean,
+          default: false,
+        }
+      }
+    ],
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     capital: {
       type: Number,
