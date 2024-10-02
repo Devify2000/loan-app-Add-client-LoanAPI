@@ -98,7 +98,7 @@ export const verifyOTP = async (req, res) => {
     if (!otpRecord) return res.status(400).json({ message: "Invalid OTP." });
 
     // Find the user associated with the email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('-password'); // Exclude the password from the result
     if (!user) return res.status(400).json({ message: "User not found." });
 
     // Activate the user's account if not activated
@@ -110,13 +110,17 @@ export const verifyOTP = async (req, res) => {
     // Delete OTP record after verification
     await OTP.deleteOne({ email });
 
-    // Send the same success response for both signup and login
-    res.status(200).json({ message: "OTP verified successfully!" });
-    
+    // Send the user data (without the password) in the success response
+    res.status(200).json({
+      message: "OTP verified successfully!",
+      user, // Return user data
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Error during OTP verification.", error });
   }
 };
+
 
 export const getDashboardData = async (req, res) => {
   try {
