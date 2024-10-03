@@ -7,6 +7,7 @@ import {calculateTotalProfit} from '../utils/extras.js'
 const addLoan = async (req, res) => {
   try {
     const {
+      loanName,
       clients,
       userId,
       capital,
@@ -20,7 +21,7 @@ const addLoan = async (req, res) => {
     } = req.body;
 
     // Basic validation of required fields
-    if (!clients || !userId || !capital || !monthlyInterest || !timeline || !currency || !legalExpenses) {
+    if (!loanName || !clients || !userId || !capital || !monthlyInterest || !timeline || !currency || !legalExpenses) {
       return res.status(400).json({ message: "All required fields must be provided." });
     }
 
@@ -40,6 +41,7 @@ const addLoan = async (req, res) => {
 
     // Create a new loan instance
     const loan = new Loan({
+      loanName,
       clients: clientStatusArray,
       userId,
       capital,

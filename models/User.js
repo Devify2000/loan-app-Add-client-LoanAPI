@@ -27,11 +27,11 @@ const UserSchema = new Schema(
       type: String,
       trim: true,
     },
-    gender: {
-      type: String,
-      enum: ["male", "female", "other"],
-      required: true,
-    },
+    // gender: {
+    //   type: String,
+    //   enum: ["male", "female", "other"],
+    //   required: true,
+    // },
     profileImage: {
       type: String,
     },

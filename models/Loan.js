@@ -2,6 +2,10 @@ import { Schema, model } from "mongoose";
 
 const loanSchema = new Schema(
   {
+    loanName: {
+      type: String,
+      required: true,
+    },
     clients: [
       {
         _id: false,
