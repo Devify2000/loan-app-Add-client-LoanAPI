@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addLoan, editLoan, getAllLoans, deleteLoan, getLoanById } from '../controllers/loanController.js';
+import { addLoan, editLoan, getAllLoans, deleteLoan, getLoanById, getLoanPdf, getLoanExcel } from '../controllers/loanController.js';
 
 const loanRouter = Router()
 
@@ -9,6 +9,11 @@ loanRouter.post('/', addLoan);
 // Edit loan
 loanRouter.put('/:id', editLoan);
 
+//get pdf
+loanRouter.get('/pdf/:id', getLoanPdf);
+
+//get excel 
+loanRouter.get('/excel/:id', getLoanExcel)
 // Get all loans
 loanRouter.get('/', getAllLoans);
 

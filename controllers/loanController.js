@@ -2,6 +2,8 @@ import Loan from '../models/Loan.js';
 import Client from '../models/Client.js';
 import User from '../models/User.js'
 import {calculateTotalProfit} from '../utils/extras.js'
+import generateLoanPDF from '../utils/generatePdf.js'
+import generateLoanExcel from '../utils/generateExcel.js'
 
 // Add a new loan
 const addLoan = async (req, res) => {
@@ -119,6 +121,52 @@ const deleteLoan = async (req, res) => {
   }
 };
 
+const getLoanPdf = async (req, res) => {
+  try {
+    const loanId = req.params.id;
+    const loan = await Loan.findById(loanId).populate('clients.client').populate('userId');
+
+    if (!loan) {
+      return res.status(404).json({ message: 'Loan not found' });
+    }
+
+    const pdfPath = await generateLoanPDF(loan);
+
+    res.download(pdfPath, `loan_${loanId}.pdf`, (err) => {
+      if (err) {
+        res.status(500).json({ message: 'Error downloading PDF', error: err.message });
+      }
+      // Optionally, delete the file after download
+      // fs.unlinkSync(pdfPath);
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+}
+
+const getLoanExcel = async(req, res) => {
+  try {
+    const loanId = req.params.id;
+    const loan = await Loan.findById(loanId).populate('clients.client').populate('userId');
+
+    if (!loan) {
+      return res.status(404).json({ message: 'Loan not found' });
+    }
+
+    const excelPath = await generateLoanExcel(loan);
+
+    res.download(excelPath, `loan_${loanId}.xlsx`, (err) => {
+      if (err) {
+        res.status(500).json({ message: 'Error downloading Excel file', error: err.message });
+      }
+      // Optionally, delete the file after download
+      // fs.unlinkSync(excelPath);
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+}
+
 const validateClients = async (clientIds) => {
   const validClients = await Promise.all(clientIds.map(async (clientId) => {
     const validClient = await Client.findById(clientId);
@@ -151,5 +199,7 @@ export {
   editLoan,
   getAllLoans,
   deleteLoan,
-  getLoanById
+  getLoanById,
+  getLoanPdf,
+  getLoanExcel
 };
