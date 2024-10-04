@@ -91,6 +91,18 @@ const getAllLoans = async (req, res) => {
   }
 };
 
+const getLoanById = async (req, res) => {
+  try {
+    const loan = await Loan.findById(req.params.id).populate('clients');
+    if (!loan) {
+      return res.status(404).json({ message: "Loan not found" });
+    }
+    res.json(loan);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Delete a loan
 const deleteLoan = async (req, res) => {
   try {
@@ -136,4 +148,5 @@ export {
   editLoan,
   getAllLoans,
   deleteLoan,
+  getLoanById
 };
