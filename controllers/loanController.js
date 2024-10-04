@@ -93,7 +93,10 @@ const getAllLoans = async (req, res) => {
 
 const getLoanById = async (req, res) => {
   try {
-    const loan = await Loan.findById(req.params.id).populate('clients');
+    const loan = await Loan.findById(req.params.id).populate({
+      path: 'clients',
+      populate: { path: 'client' },
+    });
     if (!loan) {
       return res.status(404).json({ message: "Loan not found" });
     }
