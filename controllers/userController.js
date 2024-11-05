@@ -139,16 +139,22 @@ export const getDashboardData = async (req, res) => {
       }
     ]);
 
-    // Count clients who have paid and who have not paid
-    const paidClientsCount = await Client.countDocuments({ hasPaid: true });
-    const unpaidClientsCount = await Client.countDocuments({ hasPaid: false });
+    // Count paid and unpaid clients
+    const paidClientsCount = await Loan.aggregate([
+      { $unwind: '$clients' },
+      { $group: { _id: null, count: { $sum: { $cond: { if: { $eq: ['$clients.hasPaid', true] }, then: 1, else: 0 } } } } }
+    ]);
+    const unpaidClientsCount = await Loan.aggregate([
+      { $unwind: '$clients' },
+      { $group: { _id: null, count: { $sum: { $cond: { if: { $eq: ['$clients.hasPaid', false] }, then: 1, else: 0 } } } } }
+    ]);
 
     // Prepare the response data
     const dashboardData = {
       totalCapital: totalCapital[0] ? totalCapital[0].total : 0,
       netMonthlyProfit: netMonthlyProfit[0] ? netMonthlyProfit[0].totalProfit : 0,
-      clientsPaid: paidClientsCount,
-      clientsNotPaid: unpaidClientsCount,
+      clientsPaid: paidClientsCount[0] ? paidClientsCount[0].count : 0,
+      clientsNotPaid: unpaidClientsCount[0] ? unpaidClientsCount[0].count : 0,
     };
 
     // Send the response
@@ -158,3 +164,4 @@ export const getDashboardData = async (req, res) => {
     res.status(500).json({ message: "Error fetching dashboard data", error: error.message });
   }
 };
+  
